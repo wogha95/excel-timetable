@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>excel-schedule</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+    <script>
+      function timeToIndex(str) {
+        if (str === "월 09:00~10:30") return 0;
+        if (str === "화 09:00~10:30") return 1;
+        if (str === "수 09:00~10:30") return 2;
+        if (str === "목 09:00~10:30") return 3;
+        if (str === "금 09:00~10:30") return 4;
+        if (str === "월 10:30~12:00") return 5;
+        if (str === "화 10:30~12:00") return 6;
+        if (str === "수 10:30~12:00") return 7;
+        if (str === "목 10:30~12:00") return 8;
+        if (str === "금 10:30~12:00") return 9;
+        if (str === "월 12:00~13:30") return 10;
+        if (str === "화 12:00~13:30") return 11;
+        if (str === "수 12:00~13:30") return 12;
+        if (str === "목 12:00~13:30") return 13;
+        if (str === "금 12:00~13:30") return 14;
+        if (str === "월 13:30~15:00") return 15;
+        if (str === "화 13:30~15:00") return 16;
+        if (str === "수 13:30~15:00") return 17;
+        if (str === "목 13:30~15:00") return 18;
+        if (str === "금 13:30~15:00") return 19;
+        if (str === "월 15:00~16:30") return 20;
+        if (str === "화 15:00~16:30") return 21;
+        if (str === "수 15:00~16:30") return 22;
+        if (str === "목 15:00~16:30") return 23;
+        if (str === "금 15:00~16:30") return 24;
+        if (str === "월 16:30~18:00") return 25;
+        if (str === "화 16:30~18:00") return 26;
+        if (str === "수 16:30~18:00") return 27;
+        if (str === "목 16:30~18:00") return 28;
+        if (str === "금 16:30~18:00") return 29;
+      }
+
+      const days = ["월", "화", "수", "목", "금"];
+      const times = [
+        "09:00~10:30",
+        "10:30~12:00",
+        "12:00~13:30",
+        "13:30~15:00",
+        "15:00~16:30",
+        "16:30~18:00",
+      ];
+
+      function excelExport(event) {
+        excelExportCommon(event, handleExcelDataAll);
+      }
+      function excelExportCommon(event, callback) {
+        var input = event.target;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var fileData = reader.result;
+          var wb = XLSX.read(fileData, { type: "binary" });
+          var sheetNameList = wb.SheetNames; // 시트 이름 목록 가져오기
+          var firstSheetName = sheetNameList[0]; // 첫번째 시트명
+          var firstSheet = wb.Sheets[firstSheetName]; // 첫번째 시트
+          callback(firstSheet);
+        };
+        reader.readAsBinaryString(input.files[0]);
+      }
+      function handleExcelDataAll(sheet) {
+        handleExcelDataHeader(sheet); // header 정보
+        handleExcelDataJson(sheet); // json 형태
+        handleExcelDataHtml(sheet); // html 형태
+      }
+      function handleExcelDataHeader(sheet) {
+        var headers = get_header_row(sheet);
+        $("#displayHeaders").html(JSON.stringify(headers));
+      }
+      function handleExcelDataJson(sheet) {
+        // $("#displayExcelJson").html(
+        //   JSON.stringify(XLSX.utils.sheet_to_json(sheet))
+        // );
+        const test = XLSX.utils.sheet_to_json(sheet);
+        test.sort(function (a, b) {
+          return timeToIndex(a.실습시간) - timeToIndex(b.실습시간);
+        });
+
+        const outputs = [];
+        let output = {
+          시간표: "09:30~10:30",
+        };
+        let testIndex = 0;
+
+        for (let index = 0; index < 30; index++) {
+          if (index !== 0 && index % 5 === 0) {
+            outputs.push(output);
+            output = {
+              시간표: times[index / 5],
+            };
+          }
+          const day = days[index % 5];
+          if (
+            test.length - 1 < testIndex ||
+            test[testIndex].실습시간[0] !== day ||
+            test[testIndex].실습시간.slice(2) !== times[parseInt(index / 5)]
+          )
+            output[day] = "-";
+          else {
+            output[day] =
+              test[testIndex].과목명 +
+              "/" +
+              test[testIndex].분반 +
+              "-" +
+              test[testIndex].실습조 +
+              "/" +
+              test[testIndex].수강대상;
+            testIndex++;
+          }
+          if (index == 29) outputs.push(output);
+        }
+
+        $("#displayExcelJson").html(JSON.stringify(outputs));
+        const ws = XLSX.utils.json_to_sheet(outputs);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "동415");
+        XLSX.writeFile(wb, "동415.xlsx");
+      }
+      function handleExcelDataHtml(sheet) {
+        $("#displayExcelHtml").html(XLSX.utils.sheet_to_html(sheet));
+      }
+      function get_header_row(sheet) {
+        var headers = [];
+        var range = XLSX.utils.decode_range(sheet["!ref"]);
+        var C,
+          R = range.s.r; /* start in the first row */
+        /* walk every column in the range */
+        for (C = range.s.c; C <= range.e.c; ++C) {
+          var cell =
+            sheet[
+              XLSX.utils.encode_cell({ c: C, r: R })
+            ]; /* find the cell in the first row */
+
+          if (C == 6) break;
+
+          var hdr = "UNKNOWN " + C; // <-- replace with your desired default
+          if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
+
+          headers.push(hdr);
+        }
+        return headers;
+      }
+    </script>
+  </head>
+  <body>
+    파일 선택 :
+    <input type="file" id="excelFile" onchange="excelExport(event)" />
+    <h1>Header 정보 보기</h1>
+    <div id="displayHeaders"></div>
+    <h1>JSON 형태로 보기</h1>
+    <div id="displayExcelJson"></div>
+    <h1>HTML 형태로 보기</h1>
+    <div id="displayExcelHtml"></div>
+  </body>
+</html>
