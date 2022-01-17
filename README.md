@@ -1,5 +1,5 @@
 # 📝excel-timetable
-- 수업교과목 목록을 시간표(Excel file)로 만드는 파일입니다.
+- 수업교과목 목록을 시간표로 만드는 파일입니다.
 - 수작업으로 하나씩 확인하며 만드는 건 불필요한 시간과 노동을 요구한다고 느껴져 만들게 되었습니다.
 
 <br>
@@ -79,3 +79,10 @@ sheetNameList.forEach((element, index) => {
 // line 71
 XLSX.writeFile(workBook, "example.xlsx");
 ```
+
+<br>
+
+## 🔗참고링크
+[링크1](https://eblo.tistory.com/83)
+<br>
+[링크2](https://ichi.pro/ko/xlsxleul-sayonghayeo-node-jseseo-excel-pail-ilg-gi-sseugi-188091786395828)
