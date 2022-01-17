@@ -83,6 +83,5 @@ XLSX.writeFile(workBook, "example.xlsx");
 <br>
 
 ## 🔗참고링크
-[링크1](https://eblo.tistory.com/83)
-<br>
-[링크2](https://ichi.pro/ko/xlsxleul-sayonghayeo-node-jseseo-excel-pail-ilg-gi-sseugi-188091786395828)
+- [SheetJS로 파일 읽기](https://eblo.tistory.com/83)
+- [XLSX를 사용하여 Node.js에서 Excel 파일 읽기 / 쓰기](https://ichi.pro/ko/xlsxleul-sayonghayeo-node-jseseo-excel-pail-ilg-gi-sseugi-188091786395828)
