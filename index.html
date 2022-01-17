@@ -49,8 +49,13 @@
         "16:30~18:00",
       ];
 
+      const sheetName = ["광1119", "동401", "동415"];
+
+      // 가공된 excel file - work book
+      const workBook = XLSX.utils.book_new();
+
       function excelExport(event) {
-        excelExportCommon(event, handleExcelDataAll);
+        excelExportCommon(event, handleExcelDataJson);
       }
       function excelExportCommon(event, callback) {
         var input = event.target;
@@ -59,25 +64,16 @@
           var fileData = reader.result;
           var wb = XLSX.read(fileData, { type: "binary" });
           var sheetNameList = wb.SheetNames; // 시트 이름 목록 가져오기
-          var firstSheetName = sheetNameList[0]; // 첫번째 시트명
-          var firstSheet = wb.Sheets[firstSheetName]; // 첫번째 시트
-          callback(firstSheet);
+          sheetNameList.forEach((element, index) => {
+            // 각 시트를 돌며 가공된 sheet를 workBook에 추가
+            var sheetName = wb.Sheets[element];
+            callback(sheetName, index);
+          });
+          XLSX.writeFile(workBook, "example.xlsx");
         };
         reader.readAsBinaryString(input.files[0]);
       }
-      function handleExcelDataAll(sheet) {
-        handleExcelDataHeader(sheet); // header 정보
-        handleExcelDataJson(sheet); // json 형태
-        handleExcelDataHtml(sheet); // html 형태
-      }
-      function handleExcelDataHeader(sheet) {
-        var headers = get_header_row(sheet);
-        $("#displayHeaders").html(JSON.stringify(headers));
-      }
-      function handleExcelDataJson(sheet) {
-        // $("#displayExcelJson").html(
-        //   JSON.stringify(XLSX.utils.sheet_to_json(sheet))
-        // );
+      function handleExcelDataJson(sheet, index) {
         const test = XLSX.utils.sheet_to_json(sheet);
         test.sort(function (a, b) {
           return timeToIndex(a.실습시간) - timeToIndex(b.실습시간);
@@ -85,7 +81,7 @@
 
         const outputs = [];
         let output = {
-          시간표: "09:30~10:30",
+          시간표: "09:00~10:30",
         };
         let testIndex = 0;
 
@@ -119,44 +115,12 @@
 
         $("#displayExcelJson").html(JSON.stringify(outputs));
         const ws = XLSX.utils.json_to_sheet(outputs);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "동415");
-        XLSX.writeFile(wb, "동415.xlsx");
-      }
-      function handleExcelDataHtml(sheet) {
-        $("#displayExcelHtml").html(XLSX.utils.sheet_to_html(sheet));
-      }
-      function get_header_row(sheet) {
-        var headers = [];
-        var range = XLSX.utils.decode_range(sheet["!ref"]);
-        var C,
-          R = range.s.r; /* start in the first row */
-        /* walk every column in the range */
-        for (C = range.s.c; C <= range.e.c; ++C) {
-          var cell =
-            sheet[
-              XLSX.utils.encode_cell({ c: C, r: R })
-            ]; /* find the cell in the first row */
-
-          if (C == 6) break;
-
-          var hdr = "UNKNOWN " + C; // <-- replace with your desired default
-          if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
-
-          headers.push(hdr);
-        }
-        return headers;
+        XLSX.utils.book_append_sheet(workBook, ws, sheetName[index]);
       }
     </script>
   </head>
   <body>
     파일 선택 :
     <input type="file" id="excelFile" onchange="excelExport(event)" />
-    <h1>Header 정보 보기</h1>
-    <div id="displayHeaders"></div>
-    <h1>JSON 형태로 보기</h1>
-    <div id="displayExcelJson"></div>
-    <h1>HTML 형태로 보기</h1>
-    <div id="displayExcelHtml"></div>
   </body>
 </html>
